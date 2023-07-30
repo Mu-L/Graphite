@@ -1920,6 +1920,11 @@ impl DocumentNodeType {
 		let inputs = self.inputs.iter().map(|default| input_override.next().unwrap_or_default().unwrap_or_else(|| default.default.clone()));
 		self.to_document_node(inputs, metadata)
 	}
+
+	/// Converts the [DocumentNodeType] type to a [DocumentNode], completly default
+	pub fn default_document_node(&self) -> DocumentNode {
+		self.to_document_node(self.inputs.iter().map(|input| input.default.clone()), DocumentNodeMetadata::default())
+	}
 }
 
 pub fn wrap_network_in_scope(mut network: NodeNetwork) -> NodeNetwork {

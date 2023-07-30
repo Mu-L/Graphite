@@ -1,5 +1,6 @@
 use crate::messages::prelude::*;
 
+use bezier_rs::Subpath;
 use graph_craft::document::NodeId;
 use graphene_core::uuid::ManipulatorGroupId;
 use graphene_core::vector::brush_stroke::BrushStroke;
@@ -57,6 +58,10 @@ pub enum GraphOperationMessage {
 	NewArtboard {
 		id: NodeId,
 		artboard: Artboard,
+	},
+	NewVectorLayer {
+		id: NodeId,
+		subpaths: Vec<Subpath<ManipulatorGroupId>>,
 	},
 	ResizeArtboard {
 		id: NodeId,

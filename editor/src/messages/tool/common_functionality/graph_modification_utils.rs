@@ -12,6 +12,11 @@ use std::collections::VecDeque;
 
 /// Create a new vector layer from a vector of [`bezier_rs::Subpath`].
 pub fn new_vector_layer(subpaths: Vec<Subpath<ManipulatorGroupId>>, layer_path: Vec<LayerId>, responses: &mut VecDeque<Message>) {
+	responses.add(GraphOperationMessage::NewVectorLayer {
+		id: *layer_path.last().unwrap(),
+		subpaths: subpaths.clone(),
+	});
+
 	let network = node_graph::new_vector_network(subpaths);
 	new_custom_layer(network, layer_path, responses);
 }
