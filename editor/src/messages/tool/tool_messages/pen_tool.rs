@@ -8,13 +8,13 @@ use crate::messages::tool::common_functionality::color_selector::{ToolColorOptio
 use crate::messages::tool::common_functionality::graph_modification_utils;
 use crate::messages::tool::common_functionality::overlay_renderer::OverlayRenderer;
 use crate::messages::tool::common_functionality::snapping::SnapManager;
+use crate::messages::tool::tool_messages::pen_tool::graph_modification_utils::NodeGraphLayer;
 use crate::messages::tool::utility_types::{EventToMessageMap, Fsm, ToolActionHandlerData, ToolMetadata, ToolTransition, ToolType};
 use crate::messages::tool::utility_types::{HintData, HintGroup, HintInfo};
 
 use bezier_rs::Subpath;
 use document_legacy::LayerId;
 use graph_craft::document::value::TaggedValue;
-use graph_craft::document::NodeInput;
 use graphene_core::uuid::ManipulatorGroupId;
 use graphene_core::vector::style::{Fill, Stroke};
 use graphene_core::vector::{ManipulatorPointId, SelectedType};
@@ -787,21 +787,9 @@ fn should_extend(document: &DocumentMessageHandler, pos: DVec2, tolerance: f64) 
 }
 
 fn get_subpaths<'a>(layer_path: &[LayerId], document: &'a DocumentMessageHandler) -> Option<&'a Vec<Subpath<ManipulatorGroupId>>> {
-	let layer = document.document_legacy.layer(layer_path).ok().and_then(|layer| layer.as_layer().ok())?;
-	let network = &layer.network;
-	for (node, _node_id) in network.primary_flow() {
-		if node.name == "Path Generator" {
-			let subpaths_input = node.inputs.get(0)?;
-			let NodeInput::Value {
-				tagged_value: TaggedValue::Subpaths(subpaths),
-				..
-			} = subpaths_input
-			else {
-				continue;
-			};
-
-			return Some(subpaths);
-		}
+	if let TaggedValue::Subpaths(subpaths) = NodeGraphLayer::new(layer_path, &document.document_legacy)?.find_input("Path Generator", 0)? {
+		Some(subpaths)
+	} else {
+		None
 	}
-	None
 }

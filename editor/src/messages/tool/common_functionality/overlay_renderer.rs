@@ -50,6 +50,7 @@ impl OverlayRenderer {
 			let layer_id = layer_path.last().unwrap();
 			self.layer_overlay_visibility(document, layer_path.clone(), true, responses);
 
+			// How we get vector data from graph?
 			if let Some(vector_data) = layer.as_vector_data() {
 				let outline_cache = self.shape_overlay_cache.get(layer_id);
 				trace!("Overlay: Outline cache {:?}", &outline_cache);
