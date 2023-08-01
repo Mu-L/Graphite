@@ -806,6 +806,10 @@
 						.text-label {
 							margin-right: 4px;
 						}
+						svg {
+							width: 30px;
+							height: 20px;
+						}
 					}
 
 					.parameters {
