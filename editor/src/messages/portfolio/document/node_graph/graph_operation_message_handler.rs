@@ -60,8 +60,7 @@ impl<'a> ModifyInputsContext<'a> {
 		update_input(&mut document_node.inputs);
 	}
 
-	pub fn insert_between(&mut self, pre: NodeOutput, post: NodeOutput, mut node: DocumentNode, input: usize, output: usize) -> Option<NodeId> {
-		let id = generate_uuid();
+	pub fn insert_between(&mut self, id: NodeId, pre: NodeOutput, post: NodeOutput, mut node: DocumentNode, input: usize, output: usize, shift_upstream: IVec2) -> Option<NodeId> {
 		let pre_node = self.network.nodes.get_mut(&pre.node_id)?;
 		node.metadata.position = pre_node.metadata.position;
 
@@ -71,7 +70,7 @@ impl<'a> ModifyInputsContext<'a> {
 
 		self.network.nodes.insert(id, node);
 
-		self.shift_upstream(id, IVec2::new(-8, 0));
+		self.shift_upstream(id, shift_upstream);
 
 		Some(id)
 	}
@@ -86,32 +85,27 @@ impl<'a> ModifyInputsContext<'a> {
 		Some(new_id)
 	}
 
-	pub fn create_layer(&mut self, new_id: NodeId, output_node_id: NodeId) -> Option<NodeId> {
-		let mut current_node = output_node_id;
-		let mut input_index = 0;
-		let mut current_input = &self.network.nodes.get(&current_node)?.inputs[input_index];
-
-		while let NodeInput::Node { node_id, output_index, .. } = current_input {
+	pub fn create_layer(&mut self, new_id: NodeId, output_node_id: NodeId, input_index: usize) -> Option<NodeId> {
+		let output = NodeOutput::new(output_node_id, input_index);
+		// Locate the node output of the first sibling layer to the new layer
+		if let NodeInput::Node { node_id, output_index, .. } = &self.network.nodes.get(&output_node_id)?.inputs[input_index] {
 			let sibling_node = &self.network.nodes.get(node_id)?;
-			if sibling_node.name == "Layer" {
-				current_node = *node_id;
-				input_index = 7;
-				current_input = &self.network.nodes.get(&current_node)?.inputs[input_index];
+			let sibling_layer = if sibling_node.name == "Layer" {
+				// There is already a layer node
+				NodeOutput::new(*node_id, 0)
 			} else {
-				// Insert a layer node between the output and the new
-				let layer_node = resolve_document_node_type("Layer").expect("Layer node");
-				let node = layer_node.to_document_node_default_inputs([], DocumentNodeMetadata::default());
-				let node_id = self.insert_between(NodeOutput::new(*node_id, *output_index), NodeOutput::new(current_node, input_index), node, 0, 0)?;
-				current_node = node_id;
-				input_index = 7;
-				current_input = &self.network.nodes.get(&current_node)?.inputs[input_index];
-			}
+				// The user has connected another node to the output. Insert a layer node between the output and the node.
+				let node = resolve_document_node_type("Layer").expect("Layer node").default_document_node();
+				let node_id = self.insert_between(generate_uuid(), NodeOutput::new(*node_id, *output_index), output, node, 0, 0, IVec2::new(-8, 0))?;
+				NodeOutput::new(node_id, 0)
+			};
+
+			let node = resolve_document_node_type("Layer").expect("Layer node").default_document_node();
+			self.insert_between(new_id, sibling_layer, output, node, 7, 0, IVec2::new(0, 3))
+		} else {
+			let layer_node = resolve_document_node_type("Layer").expect("Node").default_document_node();
+			self.insert_node_before(new_id, output_node_id, input_index, layer_node, IVec2::new(0, 3))
 		}
-
-		let layer_node = resolve_document_node_type("Layer").expect("Node").to_document_node_default_inputs([], Default::default());
-		let layer_node = self.insert_node_before(new_id, current_node, input_index, layer_node, IVec2::new(0, 3))?;
-
-		Some(layer_node)
 	}
 
 	fn insert_artboard(&mut self, artboard: Artboard, layer: NodeId) -> Option<NodeId> {
@@ -476,13 +470,13 @@ impl MessageHandler<GraphOperationMessage, (&mut Document, &mut NodeGraphMessage
 			}
 			GraphOperationMessage::NewArtboard { id, artboard } => {
 				let mut modify_inputs = ModifyInputsContext::new(document, node_graph, responses);
-				if let Some(layer) = modify_inputs.create_layer(id, modify_inputs.network.outputs[0].node_id) {
+				if let Some(layer) = modify_inputs.create_layer(id, modify_inputs.network.outputs[0].node_id, 0) {
 					modify_inputs.insert_artboard(artboard, layer);
 				}
 			}
 			GraphOperationMessage::NewVectorLayer { id, subpaths } => {
 				let mut modify_inputs = ModifyInputsContext::new(document, node_graph, responses);
-				if let Some(layer) = modify_inputs.create_layer(id, modify_inputs.network.outputs[0].node_id) {
+				if let Some(layer) = modify_inputs.create_layer(id, modify_inputs.network.outputs[0].node_id, 0) {
 					modify_inputs.insert_vector_data(subpaths, layer);
 				}
 			}
