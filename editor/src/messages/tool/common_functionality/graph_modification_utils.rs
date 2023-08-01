@@ -16,9 +16,6 @@ pub fn new_vector_layer(subpaths: Vec<Subpath<ManipulatorGroupId>>, layer_path: 
 		id: *layer_path.last().unwrap(),
 		subpaths: subpaths.clone(),
 	});
-
-	let network = node_graph::new_vector_network(subpaths);
-	new_custom_layer(network, layer_path, responses);
 }
 
 pub fn new_custom_layer(network: NodeNetwork, layer_path: Vec<LayerId>, responses: &mut VecDeque<Message>) {
