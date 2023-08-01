@@ -154,23 +154,14 @@ fn static_nodes() -> Vec<DocumentNodeType> {
 			name: "Layer",
 			category: "General",
 			identifier: NodeImplementation::DocumentNode(NodeNetwork {
-				inputs: vec![0; 8],
-				outputs: vec![NodeOutput::new(1, 0)],
+				inputs: vec![0, 2, 2, 2, 2, 2, 2, 2],
+				outputs: vec![NodeOutput::new(2, 0)],
 				nodes: [
 					(
 						0,
 						DocumentNode {
-							inputs: vec![
-								NodeInput::Network(concrete!(graphene_core::vector::VectorData)),
-								NodeInput::Network(concrete!(String)),
-								NodeInput::Network(concrete!(BlendMode)),
-								NodeInput::Network(concrete!(f32)),
-								NodeInput::Network(concrete!(bool)),
-								NodeInput::Network(concrete!(bool)),
-								NodeInput::Network(concrete!(bool)),
-								NodeInput::Network(concrete!(graphene_core::GraphicGroup)),
-							],
-							implementation: DocumentNodeImplementation::proto("graphene_core::ConstructLayerNode<_, _, _, _, _, _, _>"),
+							inputs: vec![NodeInput::Network(concrete!(graphene_core::vector::VectorData))],
+							implementation: DocumentNodeImplementation::proto("graphene_core::ToGraphicElementData"),
 							..Default::default()
 						},
 					),
@@ -180,6 +171,23 @@ fn static_nodes() -> Vec<DocumentNodeType> {
 						DocumentNode {
 							inputs: vec![NodeInput::node(0, 0)],
 							implementation: DocumentNodeImplementation::proto("graphene_core::memo::MonitorNode<_>"),
+							..Default::default()
+						},
+					),
+					(
+						2,
+						DocumentNode {
+							inputs: vec![
+								NodeInput::node(1, 0),
+								NodeInput::Network(concrete!(String)),
+								NodeInput::Network(concrete!(BlendMode)),
+								NodeInput::Network(concrete!(f32)),
+								NodeInput::Network(concrete!(bool)),
+								NodeInput::Network(concrete!(bool)),
+								NodeInput::Network(concrete!(bool)),
+								NodeInput::Network(concrete!(graphene_core::GraphicGroup)),
+							],
+							implementation: DocumentNodeImplementation::proto("graphene_core::ConstructLayerNode<_, _, _, _, _, _, _>"),
 							..Default::default()
 						},
 					),

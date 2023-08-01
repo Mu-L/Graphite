@@ -208,18 +208,18 @@ impl NodeRuntime {
 		let mut image_data: Vec<_> = Vec::new();
 		for node_path in monitor_nodes {
 			let Some(value) = self.executor.introspect(&node_path).flatten() else {
-				warn!("No introspect");
+				warn!("Failed to introspect monitor node for thumbnail");
 				continue;
 			};
-			let Some(graphic_group) = value.downcast_ref::<graphene_core::GraphicGroup>() else {
-				warn!("Not graphic");
+			let Some(graphic_element_data) = value.downcast_ref::<graphene_core::GraphicElementData>() else {
+				warn!("Failed to downcast thumbnail to graphic element data");
 				continue;
 			};
 			use graphene_core::renderer::*;
-			let bounds = graphic_group.bounding_box(DAffine2::IDENTITY);
+			let bounds = graphic_element_data.bounding_box(DAffine2::IDENTITY);
 			let render_params = RenderParams::new(ViewMode::Normal, bounds, true);
 			let mut render = SvgRender::new();
-			graphic_group.render_svg(&mut render, &render_params);
+			graphic_element_data.render_svg(&mut render, &render_params);
 			let [min, max] = bounds.unwrap_or_default();
 			render.format_svg(min, max);
 			debug!("SVG {}", render.svg);
